@@ -68,7 +68,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
     }
     
     function createGame (BetTypes typeBet) public payable atLeastMinBet(msg.value) onlyOwner {
-        if (games[current].rollOne == 0) {
+        if ((games[current].rollOne == 0) || (games[current].rollTwo == 0)) {
             games[current] = Round(msg.value, typeBet, 0, 0, 0, false);
             emit BetPlaced(msg.sender, msg.value);
         }
@@ -83,9 +83,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
     }
 
     function evaluateRoll() public onlyOwner  {
-        require(games[current].rollFinished, "Roll has not been completed yet!");
-
-        emit DiceResults(games[current].rollOne, games[current].rollTwo);
+        require(games[current].rollFinished == true, "Roll has not been completed yet!");
         
         uint sum = games[current].rollOne + games[current].rollTwo;
         
@@ -99,34 +97,34 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
                     payOut();
                } 
                if (sum == 2 || sum == 3 || sum == 12) {
-                   emit Loser(msg.sender, BetTypes.PASS);
+                   emit Loser(msg.sender, games[current].typeBet);
                    current += 1;
                }
     
-           } else if (games[current].typeBet == BetTypes.DONT_PASS && games[current].point == 0) {
+           } else if (games[current].typeBet == games[current].typeBet && games[current].point == 0) {
                if (sum == 2 || sum == 3 || sum == 12) {
                     payOut();
                } 
                if (sum == 7 || sum == 11){
-                    emit Loser(msg.sender, BetTypes.PASS);
+                    emit Loser(msg.sender, games[current].typeBet);
                     current += 1;
                }
                
            } else if (games[current].typeBet == BetTypes.PASS && games[current].point != 0) {
                if (sum == 7) {
-                   emit Loser(msg.sender, BetTypes.PASS);
+                   emit Loser(msg.sender, games[current].typeBet);
                    current += 1;
                }
                if (sum == games[current].point) {
                    payOut();  
                }
                
-           } else if (games[current].typeBet == BetTypes.DONT_PASS && games[current].point != 0) {
+           } else if (games[current].typeBet == games[current].typeBet && games[current].point != 0) {
                if (sum == 7) {
                    payOut();
                }
                if (sum == games[current].point) {
-                   emit Loser(msg.sender, BetTypes.DONT_PASS);
+                   emit Loser(msg.sender, games[current].typeBet);
                    current += 1;
                }  
             }
@@ -145,7 +143,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
 
     function payOut () internal onlyOwner  {
         current += 1;
-        payable(owner()).transfer(2 * games[current].betAmount);
+        payable(owner()).transfer(2 * games[current - 1].betAmount);
         emit Winner(msg.sender, games[current - 1].typeBet);
         
     }
@@ -170,8 +168,10 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
             games[current].rollTwo = (randomness % 6) + 1;
         }
         rolledIndex += 1;
+        
         if (games[current].rollOne != 0 && games[current].rollTwo != 0){
             games[current].rollFinished = true;
+            emit DiceResults(games[current].rollOne, games[current].rollTwo);
         }
     }
 }
