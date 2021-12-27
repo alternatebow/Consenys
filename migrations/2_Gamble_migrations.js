@@ -1,10 +1,14 @@
 const Gamble = artifacts.require('Gamble')
+const { LinkToken } = require('@chainlink/contracts/truffle/v0.4/LinkToken')
+const { Oracle } = require('@chainlink/contracts/truffle/v0.6/Oracle')
 
 module.exports = async (deployer, network, [defaultAccount]) => {
     // Local (development) networks need their own deployment of the LINK
     // token and the Oracle contract
+    LinkToken.setProvider(deployer.provider)
+    Oracle.setProvider(deployer.provider)
     if (!network.startsWith('kovan')) {
-        console.log("only for Kovan right now!")
+      console.log("Only for Kovan")
     } else {
         // For now, this is hard coded to Kovan
         const KOVAN_KEYHASH = '0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4'
