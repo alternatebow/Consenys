@@ -1,43 +1,33 @@
-import React, { useEffect } from 'react';
+import logo from './logo.svg';
 import './App.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import dice1 from './Dice_Images/dice-six-faces-one.png';
-import dice2 from './Dice_Images/dice-six-faces-two.png';
-import dice3 from './Dice_Images/dice-six-faces-three.png';
-import dice4 from './Dice_Images/dice-six-faces-four.png';
-import dice5 from './Dice_Images/dice-six-faces-five.png';
-import dice6 from './Dice_Images/dice-six-faces-six.png';
+import React from "react"
 import { Container, Row, Col, DropdownMenu, Dropdown, DropdownToggle, DropdownItem } from 'reactstrap';
-import {ChakraProvider, extendTheme} from "@chakra-ui/react";
-import Layout from "./components/Layout";
-import ConnectButton from './components/ConnectButton';
 import { render } from '@testing-library/react';
+import { GAMBLE_ABI, GAMBLE_ADDRESS } from './config';
 
-
-export default class App extends React.Component<any, any> {
-  constructor(props: any) {
+export default class App extends React.Component {
+  constructor(props) {
     super(props);
 
     this.toggle = this.toggle.bind(this);
     this.state = {
-      diceValue1: dice1,
-      diceValue2: dice2,
       dropdownOpen: false,
       betType: "Type of Bet"
     };
   }
 
   componentDidMount() {
-    this.setState(
-      {
-        diceValue1: dice1,
-        diceValue2: dice2
-      }
-      )
+  }
+
+  async loadBlockchainData() {
+    const web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
+    const accounts = await web3.eth.getAccounts();
+    const gambleInstance = new web3.eth.Contract(GAMBLE_ABI, GAMBLE_ADDRESS);
+    
   }
 
   toggle() {
-    this.setState((prevState: any) => ({
+    this.setState((prevState) => ({
       dropdownOpen: !prevState.dropdownOpen
     }));
   }
@@ -45,7 +35,6 @@ export default class App extends React.Component<any, any> {
   render() {
    return (
     <div className="App">
-      <header className="App-header">
           <Container>
           <Row 
             md="4"
@@ -70,7 +59,6 @@ export default class App extends React.Component<any, any> {
             className='display'
           >
             <Col>
-              <ConnectButton/>
             </Col>
             <Col>
             <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggle}>
@@ -106,10 +94,8 @@ export default class App extends React.Component<any, any> {
             Point:
           </Row>
         </Container>
-      </header>
     </div>   
     ); 
   }
 }
-  
 

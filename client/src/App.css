@@ -19,13 +19,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-around; 
+  justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
-}
-
-.dice-header {
-  padding-bottom: 300px;
 }
 
 .App-link {
@@ -39,19 +35,4 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-.dice {
-  height: 200px;
-  width:  200px;
-}
-
-.display {
-  padding-bottom: 100px;
-}
-
-.logResult {
-  flex-shrink: 0;
-  background-color: azure;
-  color: black;
 }
