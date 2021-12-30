@@ -23,7 +23,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
 
     event Point(address roller, BetTypes bet, uint point);
     
-    event BetPlaced(address bettor, uint amount);
+    event BetPlaced(address bettor, BetTypes bet, uint amount);
 
     event RequestedRandomness(bytes32 requestId);
 
@@ -83,7 +83,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
     function createGame (BetTypes typeBet) public payable atLeastMinBet(msg.value) onlyOwner {
         if ((games[current].rollOne == 0) || (games[current].rollTwo == 0)) {
             games[current] = Round(typeBet, msg.value, 0, 0, 0, 0, true);
-            emit BetPlaced(msg.sender, msg.value);
+            emit BetPlaced(msg.sender, typeBet, msg.value);
         }
     }
 
