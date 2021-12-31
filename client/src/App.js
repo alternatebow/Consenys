@@ -1,14 +1,15 @@
 import logo from './logo.svg';
 import './App.css';
 import React from "react"
-import dice1 from "./Dice_Images/dice-six-faces-one.png";
-import dice2 from "./Dice_Images/dice-six-faces-two.png";
-import dice3 from "./Dice_Images/dice-six-faces-three.png";
-import dice4 from "./Dice_Images/dice-six-faces-four.png";
-import dice5 from "./Dice_Images/dice-six-faces-five.png";
-import dice6 from "./Dice_Images/dice-six-faces-six.png";
+import dice1 from "./Dice_Images_GIFS/dice-six-faces-one.png";
+import dice2 from "./Dice_Images_GIFS/dice-six-faces-two.png";
+import dice3 from "./Dice_Images_GIFS/dice-six-faces-three.png";
+import dice4 from "./Dice_Images_GIFS/dice-six-faces-four.png";
+import dice5 from "./Dice_Images_GIFS/dice-six-faces-five.png";
+import dice6 from "./Dice_Images_GIFS/dice-six-faces-six.png";
+import waiting from "./Dice_Images_GIFS/mr-bean-waiting.gif";
 
-import { Container, Row, Col, DropdownMenu, Dropdown, DropdownToggle, DropdownItem, Button } from 'reactstrap';
+import { Container, Row, Col, DropdownMenu, Dropdown, DropdownToggle, DropdownItem, Button, Form, Label, Input } from 'reactstrap';
 import { GAMBLE_ABI, GAMBLE_ADDRESS } from './config';
 import Web3 from 'web3';
 
@@ -17,19 +18,20 @@ export default class App extends React.Component {
     super(props);
 
     this.toggle = this.toggle.bind(this);
-    //this.handleAnte = this.handleAnte.bind(this);
     this.state = {
       account: "",
       contractInstance: "",
       diceValue1: dice1,
       diceValue2: dice2,
+      diceList: [dice1, dice2, dice3, dice4, dice5, dice6],
       dropdownOpen: false,
       betType: "Type of Bet",
       betAmount: "",
       point: "None",
       betPlaced: false,
+      rollFinished: true,
       correctNetwork: false,
-      roundOver: false
+      pending: false
     };
 
   }
@@ -43,10 +45,10 @@ export default class App extends React.Component {
     this.loadBlockchainData();
   }
 
+  //Load instance of contract and subscribe to the events
   async loadBlockchainData() {
     const web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
     const networkType = await web3.eth.net.getNetworkType();
-    console.log(networkType)
     if(networkType !== 'kovan'){
       alert('Must be on the kovan network!')
     } else {
@@ -58,6 +60,26 @@ export default class App extends React.Component {
       account: accounts[0],
       contractInstance: new web3.eth.Contract(GAMBLE_ABI, GAMBLE_ADDRESS)
     });
+    
+    // Subscribe to all events from the contract
+    
+
+    this.state.contractInstance.once('Winner', () => {
+      this.setState({
+        betPlaced: false,
+      });
+      alert("Winner!")
+    });
+
+    this.state.contractInstance.once('Loser', () => {
+        this.setState({betPlaced: false});
+        alert("Loser!")
+    });
+
+    this.state.contractInstance.once('Point', (error, event) => {
+      this.setState({point: event.returnValues.point});
+      alert("Your point is: " + this.state.point);
+    });
   }
 
   toggle() {
@@ -65,24 +87,47 @@ export default class App extends React.Component {
       dropdownOpen: !prevState.dropdownOpen
     }));
   }
-  
-  async playGame(betType, betValue) {
-    let bet = (betType == "Pass") ? 0 : 1;
-    // Subscribe to all events from the contract
-    this.state.contractInstance.events.BetPlaced(() => {
-      this.setState({betPlaced: true});
-      console.log(this.state.betPlaced)
-    });
-    this.state.contractInstance.events.DiceResults(function(error, event){console.log("Hello World")})
-    this.state.contractInstance.events.Winner(() => {
-      this.setState({betPlace: false})
-    });
-    this.state.contractInstance.events.Loser(() => {
-        this.setState({betPlace: false})
+
+  async setGame(betType, betValue){
+    let bet = (betType === "Pass") ? 0 : 1;
+    this.state.contractInstance.once('BetPlaced', () => {
+      this.setState({
+        betPlaced: true,
+        pending: false
       });
-    this.state.contractInstance.events.Point(function(error, event){console.log("Hello World")});
+    });
     this.state.contractInstance.methods.createGame(bet).send({from: this.state.account, value: betValue});
-    
+    this.setState({
+      pending: true
+    })
+  }
+  
+  async playGame() {
+
+    let contractInstance = this.state.contractInstance;
+
+    this.state.contractInstance.once('DiceResults', (error, event)  => {
+      let rollOne = this.state.diceList[event.returnValues.roll1 - 1];
+      let rollTwo = this.state.diceList[event.returnValues.roll2 - 1];
+      this.setState({
+        diceValue1: rollOne,
+        diceValue2: rollTwo,
+        rollFinished: true,
+      });
+      contractInstance.methods.evaluateRoll().send({from: this.state.account});
+    });
+
+    this.state.contractInstance.once('RollEvaluated', (error, event) => {
+      this.setState({
+        pending: false
+      });
+    });
+
+    this.state.contractInstance.methods.getRandomNumber().send({from: this.state.account});
+    this.state.contractInstance.methods.getRandomNumber().send({from: this.state.account});
+    this.setState({
+      pending: true
+    })
   }
     
     
@@ -126,25 +171,35 @@ export default class App extends React.Component {
             </Col>
             <br></br>
             <Col  xs='auto'>
-              <form >
-                <label>
-                  Bet Amount <br></br>in wei <br></br> (min bet is 10000000000000)
-                  </label>
-                  <input type="text" value={this.state.betAmount} disabled={this.state.betPlaced} onChange={(e) => {
+              <Form >
+                <Label>
+                  Bet Amount in wei <br></br> (min bet is 10000000000000 wei)
+                  </Label>
+                  <Input type="text" value={this.state.betAmount} disabled={this.state.betPlaced} onChange={(e) => {
                     this.setState({betAmount: e.target.value})
-                  }}></input>
-              </form>
+                  }}></Input>
+              </Form>
             </Col>
             <Col>
-              <button onClick={
-                () => {
-                  if(this.state.betAmount < 10000000000000 && (this.state.betType != 'Pass' || this.state.betType != 'No Pass')) {
-                    alert("Bet amount is too low!")
-                  } else{
-                    this.playGame(this.state.betType, this.state.betAmount);
-                  } 
+              <Button onClick={() => {
+                if(this.state.betAmount < 10000000000000 && (this.state.betType !== 'Pass' || this.state.betType !== 'No Pass')) {
+                  alert("Invalid Bet or Bet amount is too low!")
+                } else {
+                  this.setGame(this.state.betType, this.state.betAmount)
                 }
-                }>Roll!</button>
+                // this.state.contractInstance.methods.getRandomNumber().send({from: this.state.account});
+                // this.state.contractInstance.methods.getRandomNumber().send({from: this.state.account});
+                // this.state.contractInstance.methods.evaluateRoll().send({from: this.state.account});
+                // this.state.contractInstance.methods.getCurrentRollValues(1).call({from: this.state.account}).then(console.log);
+                // this.state.contractInstance.methods.getCurrentRollValues(2).call({from: this.state.account}).then(console.log);
+              }
+              } disabled={this.state.betPlaced}>
+                Start Round
+              </Button>
+              <br></br><br></br>
+              <Button onClick={() => {
+                this.playGame();
+              }} disabled={!(this.state.betPlaced && this.state.rollFinished) || this.state.pending}>Roll!</Button>
             </Col>
           </Row>
           <Row>
@@ -154,9 +209,10 @@ export default class App extends React.Component {
             Bet Amount: {this.state.betAmount}
           </Row>
           <Row>
-            Point:
+            Point: {this.state.point}
           </Row>
         </Container>
+        <img src={waiting} alt="Transaction Pending..." style={{visibility: this.state.pending ? 'visible' : 'hidden'}}/>
     </div>   
     ); 
   }

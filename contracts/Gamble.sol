@@ -25,6 +25,8 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
     
     event BetPlaced(address bettor, BetTypes bet, uint amount);
 
+    event RollEvaluated(address bettor, BetTypes bet, uint rollValue);
+
     event RequestedRandomness(bytes32 requestId);
 
     bytes32 internal keyHash;
@@ -55,6 +57,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
         uint point;
         uint rollCounter;
         bool rollEvaluated; 
+        bool roundComplete;
     }
 
     /// @dev Constructor inherits VRFConsumerBase
@@ -81,8 +84,8 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
     /// @param typeBet The type of bet for the current round; Pass or No Pass
     /// @dev Is a payable function and which the value is checked against the minimum bet to see if valid
     function createGame (BetTypes typeBet) public payable atLeastMinBet(msg.value) onlyOwner {
-        if ((games[current].rollOne == 0) || (games[current].rollTwo == 0)) {
-            games[current] = Round(typeBet, msg.value, 0, 0, 0, 0, true);
+        if (!games[current].roundComplete) {
+            games[current] = Round(typeBet, msg.value, 0, 0, 0, 0, true, true);
             emit BetPlaced(msg.sender, typeBet, msg.value);
         }
     }
@@ -147,6 +150,8 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
         }
         /// @dev Ensures that you must evaluate the roll before rolling again. (No do-overs)
         games[current].rollEvaluated = true;
+        emit RollEvaluated(msg.sender, games[current].typeBet, sum);
+     
     }
     
     
@@ -198,6 +203,13 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
             return games[current].typeBet;
         }
 
+    function isRollEvaluated() public view onlyOwner returns(bool) {
+        return games[current].rollEvaluated;
+    }
+
+    function isRoundOver() public view onlyOwner returns(bool) {
+        return games[current].roundComplete;
+    }
 
     /// @dev Getter function mainly used for testing purposes
     /// @param dieNum The die whose face value is being requested

@@ -1,4 +1,4 @@
-export const GAMBLE_ADDRESS = "0x8E284664376c3cafe554Be5779F9d7B4Ba029f03"
+export const GAMBLE_ADDRESS = "0xB9747fEEAfcE0ae78e6906B2e121B52C8C56203F"
 
 export const GAMBLE_ABI = [
   {
@@ -153,6 +153,31 @@ export const GAMBLE_ABI = [
       {
         "indexed": false,
         "internalType": "address",
+        "name": "bettor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum Gamble.BetTypes",
+        "name": "bet",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "rollValue",
+        "type": "uint256"
+      }
+    ],
+    "name": "RollEvaluated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
         "name": "roller",
         "type": "address"
       },
@@ -234,6 +259,11 @@ export const GAMBLE_ABI = [
       {
         "internalType": "bool",
         "name": "rollEvaluated",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "roundComplete",
         "type": "bool"
       }
     ],
@@ -382,6 +412,34 @@ export const GAMBLE_ABI = [
         "internalType": "enum Gamble.BetTypes",
         "name": "",
         "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "isRollEvaluated",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "isRoundOver",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
