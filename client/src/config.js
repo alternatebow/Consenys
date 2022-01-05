@@ -1,4 +1,4 @@
-export const GAMBLE_ADDRESS = "0xB9747fEEAfcE0ae78e6906B2e121B52C8C56203F"
+export const GAMBLE_ADDRESS = "0x0faaDFd3da6c67a0505B464813A6a7B65b19930c"
 
 export const GAMBLE_ABI = [
   {
@@ -386,6 +386,13 @@ export const GAMBLE_ABI = [
   {
     "inputs": [],
     "name": "evaluateRoll",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "quitGame",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

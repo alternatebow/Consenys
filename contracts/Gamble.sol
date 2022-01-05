@@ -38,8 +38,8 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
     /// @notice Index that alternates which die gets assigned a value
     uint256 public rolledIndex = 0; 
 
-    /// @notice Minimum bet is 0.01 Finney
-    uint256 public minBet = 10000000000000; 
+    /// @notice Minimum bet is 1 Finney
+    uint256 public minBet = 1000000000000000; 
  
     
     /// @notice Enforces that the minimum bet is 1 Finney (0.001 ETH)
@@ -152,6 +152,11 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
         games[current].rollEvaluated = true;
         emit RollEvaluated(msg.sender, games[current].typeBet, sum);
      
+    }
+
+    function quitGame() public onlyOwner nonReentrant{
+        current += 1;
+        emit Loser(msg.sender, games[current - 1].typeBet);
     }
     
     
