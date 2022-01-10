@@ -1,4 +1,6 @@
-.env/
+.env
+.vscode/
 build/
+LICENSE
 node_modules/
-README.md/
+README.md

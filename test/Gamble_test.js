@@ -18,7 +18,7 @@ contract('Gamble', accounts => {
         link = await LinkToken.new({ from: defaultAccount })
         vrfCoordinatorMock = await VRFCoordinatorMock.new(link.address, { from: defaultAccount })
         gamble = await Gamble.new(link.address, keyhash, vrfCoordinatorMock.address, fee, { from: defaultAccount })
-        web3.eth.sendTransaction({from:investor, to:gamble.address, value: web3.utils.toWei('0.01', "Ether")})
+        web3.eth.sendTransaction({from:investor, to:gamble.address, value: web3.utils.toWei('0.05', "Ether")})
 
     })
     it('The contract is properly deployed with the right owner', async () => {
@@ -29,7 +29,7 @@ contract('Gamble', accounts => {
     it('returns two random numbers with link', async () => {
         await link.transfer(gamble.address, web3.utils.toWei('2', 'ether'), { from: defaultAccount })
         //Load the contract with some ether for later tests and payouts
-        await gamble.createGame(1, {from: defaultAccount, value: 10000000000000})
+        await gamble.createGame(1, {from: defaultAccount, value: 1000000000000000})
         let transaction = await gamble.getRandomNumber({ from: defaultAccount })
         assert.exists(transaction.receipt.rawLogs)
         // This is the event that is emitted
@@ -52,7 +52,7 @@ contract('Gamble', accounts => {
 
     it('It evaluate a bet and determines if winning bet', async () => {
         // Bet is a Pass bet, so winning numbers are 7 and 11 on first roll
-        await gamble.createGame(0, {from: defaultAccount, value: 10000000000000})
+        await gamble.createGame(0, {from: defaultAccount, value: 1000000000000000})
         let bet = await gamble.getCurrentBetType()
         await link.transfer(gamble.address, web3.utils.toWei('2', 'ether'), { from: defaultAccount })
         let firstRoll = await gamble.getRandomNumber({from: defaultAccount})
@@ -72,7 +72,7 @@ contract('Gamble', accounts => {
     })
         
     it('It evaluates a losing bet', async () => {
-        await gamble.createGame(1, {from: defaultAccount, value: 10000000000000})
+        await gamble.createGame(1, {from: defaultAccount, value: 1000000000000000})
         let bet = await gamble.getCurrentBetType()
         
         await link.transfer(gamble.address, web3.utils.toWei('2', 'ether'), { from: defaultAccount })
@@ -94,10 +94,10 @@ contract('Gamble', accounts => {
     })
 
     it('It evaluates a bet involving a point', async () => {
-        await gamble.createGame(1, {from: defaultAccount, value: 10000000000000})
+        await gamble.createGame(1, {from: defaultAccount, value: 1000000000000000})
         let bet = await gamble.getCurrentBetType()
         
-        await link.transfer(gamble.address, web3.utils.toWei('4', 'ether'), { from: defaultAccount })
+        await link.transfer(gamble.address, web3.utils.toWei('6', 'ether'), { from: defaultAccount })
         let firstRoll = await gamble.getRandomNumber({from: defaultAccount})
         let requestIdOne = firstRoll.receipt.rawLogs[3].topics[0]
         await vrfCoordinatorMock.callBackWithRandomness(requestIdOne, '89', gamble.address, {from: defaultAccount})
@@ -115,9 +115,10 @@ contract('Gamble', accounts => {
         })
         assert.equal(point, 10, "Point is not as expected!")
 
+        
         let thirdRoll = await gamble.getRandomNumber({from: defaultAccount})
         let requestIdThree = thirdRoll.receipt.rawLogs[3].topics[0]
-        await vrfCoordinatorMock.callBackWithRandomness(requestIdThree, '97', gamble.address, {from: defaultAccount})
+        await vrfCoordinatorMock.callBackWithRandomness(requestIdThree, '100', gamble.address, {from: defaultAccount})
         
         
         let fourthRoll = await gamble.getRandomNumber({from: defaultAccount})
@@ -125,12 +126,13 @@ contract('Gamble', accounts => {
         await vrfCoordinatorMock.callBackWithRandomness(requestIdFour, '244', gamble.address, {from: defaultAccount})
 
         let reward
-        let tx2 = await gamble.evaluateRoll({from: defaultAccount})
-         truffleAssert.eventEmitted(tx2, 'Winner', async (ev) => {
+ 
+        let tx3 = await gamble.evaluateRoll({from: defaultAccount})
+         truffleAssert.eventEmitted(tx3, 'Loser', async (ev) => {
              reward = ev.reward
             return ev.roller == gamble.owner() && ev.bet == bet
         })
-        assert.equal(reward, 20000000000000, "Incorrect payout" );
+        assert.equal(1, bet, "Incorrect bet type!" );
 
     })
     

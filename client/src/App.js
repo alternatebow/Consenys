@@ -7,9 +7,10 @@ import dice3 from "./Dice_Images_GIFS/dice-six-faces-three.png";
 import dice4 from "./Dice_Images_GIFS/dice-six-faces-four.png";
 import dice5 from "./Dice_Images_GIFS/dice-six-faces-five.png";
 import dice6 from "./Dice_Images_GIFS/dice-six-faces-six.png";
-import waiting from "./Dice_Images_GIFS/mr-bean-waiting.gif";
+import waiting from "./Dice_Images_GIFS/dice_animation.gif";
+import ante from "./Dice_Images_GIFS/Stacking_Chips.gif";
 import { Container, Row, Col, DropdownMenu, Dropdown, 
-  DropdownToggle, DropdownItem, Button, Form, Label, Input, Table, FormText, CA} from 'reactstrap';
+  DropdownToggle, DropdownItem, Button, Form, Label, Input, Table, FormText} from 'reactstrap';
 import { GAMBLE_ABI, GAMBLE_ADDRESS } from './config';
 import Web3 from 'web3';
 
@@ -18,6 +19,7 @@ export default class App extends React.Component {
     super(props);
 
     this.toggle = this.toggle.bind(this);
+    this.toggleSideBets = this.toggleSideBets.bind(this);
     this.state = {
       account: "",
       betType: "Type of Bet",
@@ -34,6 +36,7 @@ export default class App extends React.Component {
       previousDice2: "",
       rollFinished: true,
       rollEvaluated: true,
+      randomRequestCounter: 0,
       pending: false,
       walletConnected: false,
       web3Provider: ""
@@ -72,12 +75,20 @@ export default class App extends React.Component {
     }));
   }
 
+  toggleSideBets() {
+    this.setState((prevStateSide) => ({
+      dropDownSideBets: !prevStateSide.dropDownSideBets
+    }));
+  }
+
   setGame(betType, betValue){
     let bet = (betType === "Pass") ? 0 : 1;
+    
     this.state.contractInstance.once('BetPlaced', () => {
       this.setState({
         betPlaced: true,
-        pending: false
+        pending: false,
+        resultTriggered: false
       });
     });
     this.state.contractInstance.methods.createGame(bet).send({
@@ -88,7 +99,12 @@ export default class App extends React.Component {
     })
 
     // Subscribe to all events from the contract
+    // Search from lastest block number
     this.state.contractInstance.once('Winner', () => {
+      if (!this.state.resultTriggered){
+        alert("Winner! Congratulations! You won " + 2 * this.state.betAmount + " finney!");
+        this.setState({resultTriggered : true});
+      }
       setTimeout(() => {
         this.setState({
           betType: "Type of Bet",
@@ -96,14 +112,17 @@ export default class App extends React.Component {
           point: "None",
           diceValue1: cube,
           diceValue2: cube,
-          previousDice1: cube,
-          previousDice2: cube
+          previousDice1: this.state.diceValue1,
+          previousDice2: this.state.diceValue2
         })
-      }, 2000);
-      alert("Winner! Congratulations! You won " + 2 * this.state.betAmount + " finney!");
+      }, 1000);
     });
 
     this.state.contractInstance.once('Loser', () => {
+      if (!this.state.resultTriggered){
+        this.setState({resultTriggered : true});
+        alert("Sorry! You lost the bet!")
+      }
       setTimeout(() => {
         this.setState({
           betType: "Type of Bet",
@@ -111,11 +130,10 @@ export default class App extends React.Component {
           point: "None",
           diceValue1: cube,
           diceValue2: cube,
-          previousDice1: cube,
-          previousDice2: cube
+          previousDice1: this.state.diceValue1,
+          previousDice2: this.state.diceValue2
         })
-      }, 2000);
-      alert("Sorry! You lost the bet!")
+      }, 1000);
     });
 
     this.state.contractInstance.once('Point', (error, event) => {
@@ -128,6 +146,16 @@ export default class App extends React.Component {
   
   playGame() {
     let contractInstance = this.state.contractInstance;
+    
+    this.state.contractInstance.once('RequestedRandomness', () => {
+      let counter = this.state.randomRequestCounter;
+      this.setState({randomRequestCounter: counter + 1});
+    })
+
+    this.state.contractInstance.once('RequestedRandomness', () => {
+      let counter = this.state.randomRequestCounter;
+      this.setState({randomRequestCounter: counter + 1});
+    })
 
     this.state.contractInstance.once('DiceResults', (error, event)  => {
       let rollOne = this.state.diceList[event.returnValues.roll1 - 1];
@@ -144,7 +172,7 @@ export default class App extends React.Component {
     this.state.contractInstance.once('RollEvaluated', (error, event) => {
       this.setState({
         pending: false,
-        rollEvaluated: true
+        rollEvaluated: true,
       });
     });
 
@@ -217,6 +245,9 @@ export default class App extends React.Component {
           >Connect Wallet</Button>
           </Col>
           <Col>
+          <Label>
+            Main Bets
+          </Label>
           <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggle} 
             disabled={this.state.betPlaced || !this.state.walletConnected}>
               <DropdownToggle caret>
@@ -241,9 +272,12 @@ export default class App extends React.Component {
                 <Input type="number" min="0" value={this.state.betAmount} 
                   disabled={this.state.betPlaced || !this.state.walletConnected} 
                   onChange={(e) => {
-                  this.setState({betAmount: e.target.value})
-                }}></Input>
+                    if (!this.state.betPlaced) {
+                      this.setState({betAmount: e.target.value})
+                    }
+                  }}></Input>
             </Form>
+            <br></br>
           </Col>
           <Col>
             <Button onClick={() => {
@@ -253,7 +287,8 @@ export default class App extends React.Component {
               }
                 else {
                   this.setGame(this.state.betType, Web3.utils.toWei(this.state.betAmount, 'finney'));
-                }            }
+                }         
+              }
             } disabled={this.state.betPlaced || !this.state.walletConnected}
               style={{
                 backgroundColor: this.state.betPlaced || !this.state.walletConnected ? 'grey' : 'blue'
@@ -275,14 +310,17 @@ export default class App extends React.Component {
             }} 
             disabled={!(this.state.betPlaced && this.state.rollFinished) || this.state.pending || !this.state.walletConnected}
             style={{
-              backgroundColor: (!(this.state.betPlaced && this.state.rollFinished) || this.state.pending) ? 'grey' : 'blue'
+              backgroundColor: (!(this.state.betPlaced && this.state.rollFinished) ||
+               this.state.pending) ? 'grey' : 'blue'
             }}
             >
               Roll!
             </Button>
             <br></br><br></br>
             <Button onClick={() => {
-              if (window.confirm("Are you sure you want to cancel this round? You will lose your ETH!")){
+              if (window.confirm("Are you sure you want to cancel this round?\n"
+                    +"All pending transactions will not be utilized."
+                  )){
                 this.state.contractInstance.methods.quitGame().send({from: this.state.account});
                 this.setState({
                   betType: "Type of Bet",
@@ -302,45 +340,90 @@ export default class App extends React.Component {
               Cancel round
             </Button>
           </Col>
+          <Col>
+            <Button
+              onClick={() => {
+                if (!this.state.rollEvaluated) {
+                  this.state.contractInstance.methods.evaluateRoll().send({from: this.state.account})
+                } else if (this.state.randomRequestCounter % 2 === 1) {
+                  this.state.contractInstance.methods.getRandomNumber().send({from: this.state.account})
+                } else {
+                  this.playGame();
+                }
+              }}
+              disabled={!this.state.walletConnected}
+            >
+              Unstuck
+            </Button>
+          </Col>
         </Row>
         <br></br>
-        <Table bordered className='settings'>
-          <thead>
-            <tr>
-              <th>
-                Bet Type
-              </th>
-              <th>
-                Bet amount
-              </th>
-              <th style={{width: '15%'}}>
-                Point
-              </th>
-              <th style={{width: '15%'}}>
-                Previous roll
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr >
-              <td>
-                {this.state.betType}
-              </td>
-              <td>
-                {this.state.betAmount} Finney
-              </td>
-              <td>
-                {this.state.point}
-              </td>
-              <td>
-                <div className='productsContainer'>
-                  <img style={{width: '15%'}} src={this.state.previousDice1}/> 
-                  <img style={{width: '15%'}} src={this.state.previousDice2}/>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </Table>
+        <Row>
+          <Col md='9'>
+            <Table bordered className='settings'>
+              <thead>
+                <tr>
+                  <th style={{color: "blue"}}>
+                    Bet Type
+                  </th>
+                  <th>
+                    Bet Placed
+                  </th>
+                  <th>
+                    Bet amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>
+                    Pass
+                  </th>
+                  <td>
+                    {this.state.betType === "Pass" && this.state.betPlaced ? "Placed" : ""}
+                  </td>
+                  <td>
+                    {this.state.betType === "Pass" ? this.state.betAmount : ""}
+                  </td>
+                </tr>
+                <tr>
+                  <th>No Pass</th>
+                  <td>
+                    {this.state.betType === "No Pass" && this.state.betPlaced ? "Placed" : ""}
+                  </td>
+                  <td>
+                    {this.state.betType === "No Pass" ? this.state.betAmount : ""}
+                  </td>
+                </tr>
+              </tbody>
+            </Table>
+          </Col>
+          <Col md='3'>
+            <Table bordered className='settings'>
+              <tbody>
+                <tr>
+                  <th style={{width: '15%'}}>
+                    Point
+                  </th>
+                  <th style={{width: '15%'}}>
+                    Previous roll
+                  </th> 
+                </tr>
+                <tr>
+                  <td>
+                    {this.state.point}
+                  </td>
+                  <td>
+                    <div className='productsContainer'>
+                      <img style={{width: '15%'}} alt='' src={this.state.previousDice1}/> 
+                      <img style={{width: '15%'}} alt='' src={this.state.previousDice2}/>
+                    </div>
+                  </td>
+                </tr>
+              </tbody> 
+            </Table>
+          </Col>
+        </Row>
       </Container>
       <br></br>
       <div>
@@ -348,7 +431,7 @@ export default class App extends React.Component {
       </div>
       <br></br>
       <div style={{visibility: this.state.pending ? 'visible' : 'hidden'}}>
-        <img src={waiting} alt='Cannot be found'/>
+        <img src={this.state.betPlaced ? waiting : ante} alt='Cannot be found'/>
         <br></br>
         Transaction processing...
       </div>

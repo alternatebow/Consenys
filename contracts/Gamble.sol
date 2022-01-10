@@ -13,17 +13,23 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
     mapping(uint256 => Round) public games;
 
-    enum BetTypes{PASS, DONT_PASS}
-
+    enum BetTypes{PASS, DONT_PASS, SIX_EIGHT, HARD, NONE}
+    
     event DiceResults(uint roll1, uint roll2);
 
     event Winner(address roller, BetTypes bet, uint reward);
+
+    event HardBetWinner(address roller, BetTypes bet, uint reward, uint number);
+
+    event SixEightBetWinner(address roller, BetTypes bet, uint reward);
 
     event Loser(address roller, BetTypes bet);
 
     event Point(address roller, BetTypes bet, uint point);
     
     event BetPlaced(address bettor, BetTypes bet, uint amount);
+
+    event SideBetPlaced(address bettor, BetTypes sideBet, uint amount, uint number);
 
     event RollEvaluated(address bettor, BetTypes bet, uint rollValue);
 
@@ -40,6 +46,9 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
 
     /// @notice Minimum bet is 1 Finney
     uint256 public minBet = 1000000000000000; 
+
+    /// @notice Minimum bet is 0.5 Finney
+    uint256 public minSideBet = 500000000000000;
  
     
     /// @notice Enforces that the minimum bet is 1 Finney (0.001 ETH)
@@ -49,15 +58,25 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
         _;
     }
 
+    modifier atLeastMinSideBet(uint sideAnte){
+        require(sideAnte >= minSideBet, "Minimum side bet is too low");
+        _;
+    }
+
     struct Round {
         BetTypes typeBet;
         uint256 betAmount;
-        uint rollOne;
-        uint rollTwo;
-        uint point;
-        uint rollCounter;
+        uint256 sixEightBet;
+        uint256 hardBet;
+        uint256 rollOne;
+        uint256 rollTwo;
+        uint256 point;
+        uint256 hardNum;
+        uint256 rollCounter;
         bool rollEvaluated; 
         bool roundComplete;
+        bool sixEightBetOn;
+        bool hardBetOn;
     }
 
     /// @dev Constructor inherits VRFConsumerBase
@@ -85,11 +104,27 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
     /// @dev Is a payable function and which the value is checked against the minimum bet to see if valid
     function createGame (BetTypes typeBet) public payable atLeastMinBet(msg.value) onlyOwner {
         if (!games[current].roundComplete) {
-            games[current] = Round(typeBet, msg.value, 0, 0, 0, 0, true, true);
+            games[current] = Round(typeBet, msg.value, 0, 0, 0, 0, 0, 0, 0, true, true, false, false);
             emit BetPlaced(msg.sender, typeBet, msg.value);
         }
     }
 
+    function placeSideBet(BetTypes sideBet, uint number) public payable atLeastMinSideBet(msg.value) onlyOwner {
+        /// @notice Can only place sideBet after point is established and no more than one of 
+        /// each sidebet has been placed
+        if (games[current].point != 0) {
+            if (sideBet == BetTypes.SIX_EIGHT && !games[current].sixEightBetOn) {
+                games[current].sixEightBetOn = true;
+                games[current].sixEightBet = msg.value;
+            }
+            if (sideBet == BetTypes.HARD && !games[current].hardBetOn) {
+                games[current].hardBetOn = true;
+                games[current].hardNum = number;
+                games[current].hardBet = msg.value;
+            }
+            emit SideBetPlaced(msg.sender, sideBet, msg.value, number);
+        }
+    }
 
     /// @notice Requests randomness from a user-provided seed
     function getRandomNumber() public onlyOwner returns (bytes32 requestId) {
@@ -120,7 +155,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
                    current += 1;
                }
     
-           } else if (games[current].typeBet == games[current].typeBet && games[current].point == 0) {
+           } else if (games[current].typeBet == BetTypes.DONT_PASS && games[current].point == 0) {
                if (sum == 2 || sum == 3 || sum == 12) {
                     payOut();
                } 
@@ -138,7 +173,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
                    payOut();  
                }
                
-           } else if (games[current].typeBet == games[current].typeBet && games[current].point != 0) {
+           } else if (games[current].typeBet == BetTypes.DONT_PASS && games[current].point != 0) {
                if (sum == 7) {
                    payOut();
                }
@@ -151,18 +186,72 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
         /// @dev Ensures that you must evaluate the roll before rolling again. (No do-overs)
         games[current].rollEvaluated = true;
         emit RollEvaluated(msg.sender, games[current].typeBet, sum);
-     
     }
 
-    function quitGame() public onlyOwner nonReentrant{
+    function sideBetEvaluation() public onlyOwner nonReentrant {
+        require(games[current].sixEightBetOn || games[current].hardBetOn, "No side bets placed!");
+        
+        uint sum = games[current].rollOne + games[current].rollTwo;
+        
+        /// @dev Evaluate Hard Bet
+        if (games[current].hardBetOn) {
+            if (sum == 4) {
+                if (games[current].rollOne == 2 && games[current].rollTwo == 2) {
+                    uint reward = 8 * games[current].hardBet;
+                    games[current].hardBetOn = false;
+                    games[current].hardBet = 0;
+                    payable(owner()).transfer(reward);
+                    emit HardBetWinner(msg.sender, BetTypes.HARD, reward, sum);
+                }
+            }
+            if (sum == 10) {
+                if (games[current].rollOne == 5 && games[current].rollTwo == 5) {
+                    uint reward = 8 * games[current].hardBet;
+                    games[current].hardBetOn = false;
+                    games[current].hardBet = 0;
+                    payable(owner()).transfer(reward);
+                    emit HardBetWinner(msg.sender, BetTypes.HARD, reward, sum);
+                }
+            }
+            if (sum == 6) {
+                if (games[current].rollOne == 3 && games[current].rollTwo == 3) {
+                    uint reward = 10 * games[current].hardBet;
+                    games[current].hardBetOn = false;
+                    games[current].hardBet = 0;
+                    payable(owner()).transfer(reward);
+                    emit HardBetWinner(msg.sender, BetTypes.HARD, reward, sum);
+                }
+            }
+            if (sum == 8) {
+                if (games[current].rollOne == 4 && games[current].rollTwo == 4) {
+                    uint reward = 10 * games[current].hardBet;
+                    games[current].hardBetOn = false;
+                    games[current].hardBet = 0;
+                    payable(owner()).transfer(reward);
+                    emit HardBetWinner(msg.sender, BetTypes.HARD, reward, sum);
+                }
+            }
+        }
+
+        if (games[current].sixEightBetOn) {
+            if (sum == 6 || sum == 8) {
+                uint reward = 2 * games[current].sixEightBet;
+                games[current].sixEightBetOn = false;
+                games[current].sixEightBet = 0;
+                payable(owner()).transfer(reward);
+                emit SixEightBetWinner(msg.sender, BetTypes.SIX_EIGHT, reward); 
+            }
+        }
+    }
+
+    function quitGame() public onlyOwner {
         current += 1;
         emit Loser(msg.sender, games[current - 1].typeBet);
     }
     
-    
     /// @notice Pay out method, awarded if roller wins.
     /// @dev Applied nonReentrant modifier to provide protection against recursive reentrancy attack
-    function payOut () internal onlyOwner nonReentrant  {
+    function payOut() internal onlyOwner nonReentrant  {
         current += 1;
         uint reward = 2 * games[current - 1].betAmount;
         payable(owner()).transfer(reward);
@@ -206,7 +295,25 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
     /// @return Returns the type of bet for the current round
     function getCurrentBetType() public view onlyOwner returns(BetTypes) {
             return games[current].typeBet;
+    }
+
+    function confirmSixEightBet() public view onlyOwner returns(BetTypes) {
+        if (games[current].sixEightBetOn) {
+            return BetTypes.SIX_EIGHT;
         }
+        return BetTypes.NONE;
+    }   
+
+    function confirmHardBet() public view onlyOwner returns(BetTypes) {
+        if (games[current].hardBetOn) {
+            return BetTypes.HARD;
+        }
+        return BetTypes.NONE;
+    }
+
+    function getHardNum() public view onlyOwner returns (uint) {
+        return games[current].hardNum;
+    }
 
     function isRollEvaluated() public view onlyOwner returns(bool) {
         return games[current].rollEvaluated;
