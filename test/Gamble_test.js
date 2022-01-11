@@ -133,7 +133,6 @@ contract('Gamble', accounts => {
             return ev.roller == gamble.owner() && ev.bet == bet
         })
         assert.equal(1, bet, "Incorrect bet type!" );
-
     })
     
 })

@@ -102,13 +102,18 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
     /// @notice Creates a betting round and maps it to games. Will only create a new round if the current round is finished.
     /// @param typeBet The type of bet for the current round; Pass or No Pass
     /// @dev Is a payable function and which the value is checked against the minimum bet to see if valid
-    function createGame (BetTypes typeBet) public payable atLeastMinBet(msg.value) onlyOwner {
+    function createGame (BetTypes typeBet) public payable atLeastMinBet(msg.value) {
         if (!games[current].roundComplete) {
             games[current] = Round(typeBet, msg.value, 0, 0, 0, 0, 0, 0, 0, true, true, false, false);
             emit BetPlaced(msg.sender, typeBet, msg.value);
         }
     }
 
+
+    /// @notice Creates a side bet during rounds where a point has been established. For future implementations.
+    /// @param sideBet The type of side bet user wants to place.
+    /// @param number The number the user wants to place a hardways bet on. Will only be used if hardways bet is on.
+    /// @dev Is a payable function in which the value of transaction is checked against modifier atLeastMinSideBet
     function placeSideBet(BetTypes sideBet, uint number) public payable atLeastMinSideBet(msg.value) onlyOwner {
         /// @notice Can only place sideBet after point is established and no more than one of 
         /// each sidebet has been placed
@@ -126,8 +131,9 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
         }
     }
 
+
     /// @notice Requests randomness from a user-provided seed
-    function getRandomNumber() public onlyOwner returns (bytes32 requestId) {
+    function getRandomNumber() public returns (bytes32 requestId) {
         require(games[current].rollEvaluated == true, "Roll needs to be checked!");
         requestId = requestRandomness(keyHash, fee);
         emit RequestedRandomness(requestId);
@@ -135,7 +141,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
 
     
     /// @notice Checks values against the Bet type and determines a winner, loser or re-roll according to craps rules
-    function evaluateRoll() public onlyOwner  {
+    function evaluateRoll() public {
         require(games[current].rollOne != 0 || games[current].rollTwo != 0, "Invalid Roll!");
         require(games[current].rollEvaluated == false, "Roll is already checked!");
         
@@ -188,7 +194,8 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
         emit RollEvaluated(msg.sender, games[current].typeBet, sum);
     }
 
-    function sideBetEvaluation() public onlyOwner nonReentrant {
+    /// @dev Evaluation of any side bets prior to evaluating the main bet. For future implementation.
+    function sideBetEvaluation() public  nonReentrant {
         require(games[current].sixEightBetOn || games[current].hardBetOn, "No side bets placed!");
         
         uint sum = games[current].rollOne + games[current].rollTwo;
@@ -200,7 +207,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
                     uint reward = 8 * games[current].hardBet;
                     games[current].hardBetOn = false;
                     games[current].hardBet = 0;
-                    payable(owner()).transfer(reward);
+                    payable(msg.sender).transfer(reward);
                     emit HardBetWinner(msg.sender, BetTypes.HARD, reward, sum);
                 }
             }
@@ -209,7 +216,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
                     uint reward = 8 * games[current].hardBet;
                     games[current].hardBetOn = false;
                     games[current].hardBet = 0;
-                    payable(owner()).transfer(reward);
+                    payable(msg.sender).transfer(reward);
                     emit HardBetWinner(msg.sender, BetTypes.HARD, reward, sum);
                 }
             }
@@ -218,7 +225,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
                     uint reward = 10 * games[current].hardBet;
                     games[current].hardBetOn = false;
                     games[current].hardBet = 0;
-                    payable(owner()).transfer(reward);
+                    payable(msg.sender).transfer(reward);
                     emit HardBetWinner(msg.sender, BetTypes.HARD, reward, sum);
                 }
             }
@@ -227,7 +234,7 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
                     uint reward = 10 * games[current].hardBet;
                     games[current].hardBetOn = false;
                     games[current].hardBet = 0;
-                    payable(owner()).transfer(reward);
+                    payable(msg.sender).transfer(reward);
                     emit HardBetWinner(msg.sender, BetTypes.HARD, reward, sum);
                 }
             }
@@ -238,20 +245,30 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
                 uint reward = 2 * games[current].sixEightBet;
                 games[current].sixEightBetOn = false;
                 games[current].sixEightBet = 0;
-                payable(owner()).transfer(reward);
+                payable(msg.sender).transfer(reward);
                 emit SixEightBetWinner(msg.sender, BetTypes.SIX_EIGHT, reward); 
             }
         }
     }
 
-    function quitGame() public onlyOwner {
+    function quitGame() public {
         current += 1;
         emit Loser(msg.sender, games[current - 1].typeBet);
     }
     
+
+    function withdrawEther(uint256 amount) external payable onlyOwner {
+        require(address(this).balance >= amount, "Insufficient balance");
+        payable(owner()).transfer(amount);
+    }
+
+    function withdrawLink(uint256 amount) external onlyOwner {
+        require(LINK.transfer(owner(), amount), "Unable to transfer");
+    }
+
     /// @notice Pay out method, awarded if roller wins.
     /// @dev Applied nonReentrant modifier to provide protection against recursive reentrancy attack
-    function payOut() internal onlyOwner nonReentrant  {
+    function payOut() internal nonReentrant  {
         current += 1;
         uint reward = 2 * games[current - 1].betAmount;
         payable(owner()).transfer(reward);
@@ -291,10 +308,10 @@ contract Gamble is VRFConsumerBase, Ownable, ReentrancyGuard{
         }
     }
     
-    /// @dev Getter function mainly used for testing purposes
+    /// @dev The following getter functions mainly used for testing purposes
     /// @return Returns the type of bet for the current round
     function getCurrentBetType() public view onlyOwner returns(BetTypes) {
-            return games[current].typeBet;
+        return games[current].typeBet;
     }
 
     function confirmSixEightBet() public view onlyOwner returns(BetTypes) {

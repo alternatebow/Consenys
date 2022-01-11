@@ -192,7 +192,6 @@ export default class App extends React.Component {
       });
     alert("You are connected! Let's play!")
     }
-    
   }
     
   displayProcess() {
@@ -319,8 +318,7 @@ export default class App extends React.Component {
             <br></br><br></br>
             <Button onClick={() => {
               if (window.confirm("Are you sure you want to cancel this round?\n"
-                    +"All pending transactions will not be utilized."
-                  )){
+                    +"All pending transactions will not be utilized.")){
                 this.state.contractInstance.methods.quitGame().send({from: this.state.account});
                 this.setState({
                   betType: "Type of Bet",
@@ -335,6 +333,9 @@ export default class App extends React.Component {
                   rollEvaluated: true,
                   pending: false
                 })
+                this.state.contractInstance.methods.withdrawEther(Web3.utils.toWei(
+                  this.state.betAmount, 'finney'
+                  )).send({from: this.state.account})
               }
             }} disabled={!this.state.walletConnected} >
               Cancel round

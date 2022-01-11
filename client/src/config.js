@@ -1,4 +1,4 @@
-export const GAMBLE_ADDRESS = "0x0faaDFd3da6c67a0505B464813A6a7B65b19930c"
+export const GAMBLE_ADDRESS = "0xD9FE8f1BB7B836B06568e2eF2b11FFc7BA776878"
 
 export const GAMBLE_ABI = [
   {
@@ -69,6 +69,37 @@ export const GAMBLE_ABI = [
       }
     ],
     "name": "DiceResults",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "roller",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum Gamble.BetTypes",
+        "name": "bet",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "reward",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "number",
+        "type": "uint256"
+      }
+    ],
+    "name": "HardBetWinner",
     "type": "event"
   },
   {
@@ -178,6 +209,62 @@ export const GAMBLE_ABI = [
       {
         "indexed": false,
         "internalType": "address",
+        "name": "bettor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum Gamble.BetTypes",
+        "name": "sideBet",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "number",
+        "type": "uint256"
+      }
+    ],
+    "name": "SideBetPlaced",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "roller",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum Gamble.BetTypes",
+        "name": "bet",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "reward",
+        "type": "uint256"
+      }
+    ],
+    "name": "SixEightBetWinner",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
         "name": "roller",
         "type": "address"
       },
@@ -238,6 +325,16 @@ export const GAMBLE_ABI = [
       },
       {
         "internalType": "uint256",
+        "name": "sixEightBet",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "hardBet",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
         "name": "rollOne",
         "type": "uint256"
       },
@@ -249,6 +346,11 @@ export const GAMBLE_ABI = [
       {
         "internalType": "uint256",
         "name": "point",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "hardNum",
         "type": "uint256"
       },
       {
@@ -265,6 +367,16 @@ export const GAMBLE_ABI = [
         "internalType": "bool",
         "name": "roundComplete",
         "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "sixEightBetOn",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "hardBetOn",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -274,6 +386,20 @@ export const GAMBLE_ABI = [
   {
     "inputs": [],
     "name": "minBet",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "minSideBet",
     "outputs": [
       {
         "internalType": "uint256",
@@ -371,6 +497,25 @@ export const GAMBLE_ABI = [
     "payable": true
   },
   {
+    "inputs": [
+      {
+        "internalType": "enum Gamble.BetTypes",
+        "name": "sideBet",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "number",
+        "type": "uint256"
+      }
+    ],
+    "name": "placeSideBet",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function",
+    "payable": true
+  },
+  {
     "inputs": [],
     "name": "getRandomNumber",
     "outputs": [
@@ -392,7 +537,41 @@ export const GAMBLE_ABI = [
   },
   {
     "inputs": [],
+    "name": "sideBetEvaluation",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "quitGame",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawEther",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function",
+    "payable": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawLink",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -419,6 +598,48 @@ export const GAMBLE_ABI = [
         "internalType": "enum Gamble.BetTypes",
         "name": "",
         "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "confirmSixEightBet",
+    "outputs": [
+      {
+        "internalType": "enum Gamble.BetTypes",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "confirmHardBet",
+    "outputs": [
+      {
+        "internalType": "enum Gamble.BetTypes",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "getHardNum",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
