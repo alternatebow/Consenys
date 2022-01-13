@@ -25,9 +25,24 @@ Allowing for multiple players to play and place their own bets with/against the 
 
 
 ### Deployed Front-End
-The dApp can be accessed at:
+The dApp can be accessed at: 
+
 <https://festive-kilby-1d4186.netlify.app/>
 
+### Dependencies
+Chainlink
+
+openzeppelin
+truffle/hdwallet-provider
+create-react-app
+dotenv
+
+### How to play instructions:
+
+## Running Unit Tests
+
+
+## Screencast link
 
 ## Directory Structure
 
