@@ -344,12 +344,19 @@ export default class App extends React.Component {
           <Col>
             <Button
               onClick={() => {
-                if (!this.state.rollEvaluated) {
-                  this.state.contractInstance.methods.evaluateRoll().send({from: this.state.account})
-                } else if (this.state.randomRequestCounter % 2 === 1) {
+                if (this.state.randomRequestCounter % 2 === 1) {
                   this.state.contractInstance.methods.getRandomNumber().send({from: this.state.account})
-                } else {
-                  this.playGame();
+                }
+                // In case evaluated roll event does not emit 
+                else if (this.state.rollFinished && !this.state.rollEvaluated) {
+                  this.state.contractInstance.methods.evaluateRoll().send({from: this.state.account})
+                // In case one of the getRandomNumber() fails
+                }
+                else if (this.state.rollEvaluated){
+                  this.setState({
+                    pending: false,
+                    rollEvaluated: true,
+                  });
                 }
               }}
               disabled={!this.state.walletConnected}
