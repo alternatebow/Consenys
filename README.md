@@ -33,15 +33,7 @@ The dApp can be accessed at:
 
 #### Solidity
 ---
-"@chainlink/contracts": "^0.1.9" 
 
-"@openzeppelin/contracts": "^3.4.0" 
-
-"@truffle/hdwallet-provider": "^1.2.1" 
-
-"create-react-app": "^5.0.0" 
-
-"dotenv": "^8.2.0"
 
 #### React
 ---
@@ -67,28 +59,30 @@ The dApp can be accessed at:
 1. Press the 'Connect Wallet' Button (Make sure you are on the Kovan Network) 
 2. Use the Type of Bet Dropdown Menu to select a type of bet. 
 
-*     Pass Bet: Wins a 7 or 11 on the first roll to win. Loses on a 2, 3 or 12
+* Pass Bet: Wins a 7 or 11 on the first roll to win. Loses on a 2, 3 or 12
 
-*     No Pass Bet: Wins a 2, 3 or 12. Loses on 7 or 11.
+* No Pass Bet: Wins a 2, 3 or 12. Loses on 7 or 11.
 3. Use the input field to adjust how many Finney (0.001 ETH) to bet. 
 5. When the 'Roll' button turns blue, click on it and confirm the 2 transaction 
     (It will say 'Random Number')
 6. This part will take a bit of time (Chainlink's VRF uses a request and receive data cylcle). Once the two random numbers are generated it should display as die faces and Metamask will prompt a transaction confirmation (This will be to evaluate the roll as a winner or loser)
 7. If the roll is neither a winning or losing number, that number is considered the 'point'. 
-*     If bet was Pass: Wins on point number. Loses on 7. 
-*     No Pass Bet: Wins on 7. Loses on point number.
+* If bet was Pass: Wins on point number. Loses on 7. 
+* No Pass Bet: Wins on 7. Loses on point number.
 8. Repeat steps 5-7 until you win or lose.
 9. If you decide to quit the game. You may choose to click the 'Cancel Round' button to end the game. (It will count as a losing bet however!)
 10. If for whatever reason, Kovan fails a transaction, click on the 'Unstuck' button to redo the transaction. If that fails, you will have to click the 'Cancel Round' button to 'restart' the game.
-## Running Unit Tests
-git clone https://github.com/alternatebow/blockchain-developer-bootcamp-final-project.git
+## Running Unit Tests 
+Run the following commands on your terminal: 
 
-npm install
+1. git clone https://github.com/alternatebow/blockchain-developer-bootcamp-final-project.git
 
-npm test (which will run the command 'npx truffle test')
+2. npm install
+
+3. npm test (which will run the command 'npx truffle test')
 
 ## Screencast link
-
+<https://youtu.be/Od_j3szF1D4>
 
 ## Directory Structure
 
