@@ -23,39 +23,28 @@ Side bets intended to be added in the future which would allow for more variety 
 
 Allowing for multiple players to play and place their own bets with/against the shooter as well as their own side bets.
 
+Will most likely re-deploy this dApp on the Polygon (Matic) Mumbai Testnet. Was told that the VRF response times were much faster.
 
-### Deployed Front-End
+
+### Demo
 The dApp can be accessed at: 
 
 <https://festive-kilby-1d4186.netlify.app/>
 
 ### Dependencies
 
-#### Solidity
----
+Ensure you have Node.js 16.6.2 or newer 
 
+<https://nodejs.org/en/download/>
 
-#### React
----
+### How to setup locally:
+*   ``` git clone https://github.com/alternatebow/blockchain-developer-bootcamp-final-project.git``` 
+* Change into the directory 
+*   ```npm start```
+* ```npm run client-install```
+*   ```npm run client ```
 
-"bootstrap": "^4.3.1" 
-
-"eslint": "^5.16.0" 
-
-"react": "^16.8.3" 
-
-"react-dom": "^16.8.3" 
-
-"react-scripts": "^2.1.5" 
-
-"reactstrap": "^9.0.1" 
-
-"web3": "1.6.1" 
-
-"webpack": "4.28.3"
-
-### How to play instructions:
-
+### How to play:
 1. Press the 'Connect Wallet' Button (Make sure you are on the Kovan Network) 
 2. Use the Type of Bet Dropdown Menu to select a type of bet. 
 
@@ -63,23 +52,29 @@ The dApp can be accessed at:
 
 * No Pass Bet: Wins a 2, 3 or 12. Loses on 7 or 11.
 3. Use the input field to adjust how many Finney (0.001 ETH) to bet. 
-5. When the 'Roll' button turns blue, click on it and confirm the 2 transaction 
+4. When the 'Roll' button turns blue, click on it and confirm the 2 transaction 
     (It will say 'Random Number')
-6. This part will take a bit of time (Chainlink's VRF uses a request and receive data cylcle). Once the two random numbers are generated it should display as die faces and Metamask will prompt a transaction confirmation (This will be to evaluate the roll as a winner or loser)
-7. If the roll is neither a winning or losing number, that number is considered the 'point'. 
+5. This part will take a bit of time (Chainlink's VRF uses a request and receive data cylcle). Once the two random numbers are generated it should display as die faces and Metamask will prompt a transaction confirmation (This will be to evaluate the roll as a winner or loser)
+6. If the roll is neither a winning or losing number, that number is considered the 'point'. 
 * If bet was Pass: Wins on point number. Loses on 7. 
 * No Pass Bet: Wins on 7. Loses on point number.
-8. Repeat steps 5-7 until you win or lose.
-9. If you decide to quit the game. You may choose to click the 'Cancel Round' button to end the game. (It will count as a losing bet however!)
-10. If for whatever reason, Kovan fails a transaction, click on the 'Unstuck' button to redo the transaction. If that fails, you will have to click the 'Cancel Round' button to 'restart' the game.
-## Running Unit Tests 
+7. Repeat steps 5-7 until you win or lose.
+8. If you decide to quit the game. You may choose to click the 'Cancel Round' button to end the game. (It will count as a losing bet however!)
+9. If for whatever reason, Kovan fails a transaction, click on the 'Unstuck' button to redo the transaction. If that fails, you will have to click the 'Cancel Round' button to 'restart' the game.
+
+## Running Local Unit Tests 
 Run the following commands on your terminal: 
 
-1. git clone https://github.com/alternatebow/blockchain-developer-bootcamp-final-project.git
+1. ``` git clone https://github.com/alternatebow/blockchain-developer-bootcamp-final-project.git```
 
-2. npm install
+2. ```npm install```  (This will install your dependencies)
 
-3. npm test (which will run the command 'npx truffle test')
+3. ```ganache-cli``` 
+(Ensure port is on 8545 on the 'ganache' network in your truffle-config.js)
+
+4. In a seperate terminal ```truffle migrate --network ganache```
+
+5. ```truffle test --network ganache``` (which will run the command 'npx truffle test') 
 
 ## Screencast link
 <https://youtu.be/Od_j3szF1D4>

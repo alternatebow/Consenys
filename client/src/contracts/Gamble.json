@@ -39342,7 +39342,8 @@
     }
   },
   "schemaVersion": "3.4.3",
-  "updatedAt": "2022-01-14T00:28:45.377Z",
+  "updatedAt": "2022-01-14T21:18:25.248Z",
+  "networkType": "ethereum",
   "devdoc": {
     "author": "Calvin S. Lee",
     "details": "Currently only deployed on the Kovan network",
