@@ -30,19 +30,37 @@ The dApp can be accessed at:
 <https://festive-kilby-1d4186.netlify.app/>
 
 ### Dependencies
-Chainlink
 
-openzeppelin
-truffle/hdwallet-provider
-create-react-app
-dotenv
+#### Solidity
+=====================================================================================
+"@chainlink/contracts": "^0.1.9",
+"@openzeppelin/contracts": "^3.4.0",
+"@truffle/hdwallet-provider": "^1.2.1",
+"create-react-app": "^5.0.0",
+"dotenv": "^8.2.0"
+
+#### React
+=====================================================================================
+"bootstrap": "^4.3.1",
+"eslint": "^5.16.0",
+"react": "^16.8.3",
+"react-dom": "^16.8.3",
+"react-scripts": "^2.1.5",
+"reactstrap": "^9.0.1",
+"web3": "1.6.1",
+"webpack": "4.28.3"
 
 ### How to play instructions:
 
 ## Running Unit Tests
+git clone https://github.com/alternatebow/blockchain-developer-bootcamp-final-project.git
 
+npm install
+
+npm test (which will run the command 'npx truffle test')
 
 ## Screencast link
+
 
 ## Directory Structure
 
