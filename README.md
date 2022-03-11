@@ -77,7 +77,7 @@ Run the following commands on your terminal:
 5. ```truffle test --network ganache``` (which will run the command 'npx truffle test') 
 
 ## Screencast link
-<https://youtu.be/Od_j3szF1D4>
+Available on request
 
 ## Directory Structure
 
